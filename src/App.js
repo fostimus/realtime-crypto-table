@@ -6,48 +6,83 @@ import axios from "axios";
 function App() {
   const [renderToggle, setRenderToggle] = useState(false);
   const [cryptoData, setCryptoData] = useState([]);
+  // save as separate state for readability
+  const [totalMarketShare, setTotalMarketShare] = useState(0);
+
+  const amountOfCoins = 100;
+
+  async function longPoll() {
+    let response = await axios.get(
+      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${amountOfCoins}&page=1&sparkline=false`
+    );
+
+    if (response.status === 502) {
+      await longPoll();
+    } else if (response.status !== 200) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await longPoll();
+    } else {
+      let data = response.data;
+
+      await longPoll();
+    }
+  }
 
   useEffect(() => {
-    axios
-      .get(
-        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false"
-      )
-      .then(response => {
-        setCryptoData(response.data);
-        setTimeout(() => setRenderToggle(!renderToggle), 1000);
-      });
+    axios("").then(response => {
+      console.log(response);
+      setCryptoData(response.data);
+
+      setTotalMarketShare(
+        response.data.reduce((acc, coin) => acc + coin.market_cap, 0)
+      );
+
+      // re-render state to get updated data from coingecko
+      setTimeout(() => setRenderToggle(!renderToggle), 1000);
+    });
   }, [renderToggle]);
 
-  const data = useMemo(
+  const columns = useMemo(
     () => [
       {
-        col1: "Hello",
-        col2: "World"
+        Header: "Coin (symbol)",
+        accessor: "col1" // accessor is the "key" in the data
       },
       {
-        col1: "react-table",
-        col2: "rocks"
+        Header: "Price",
+        accessor: "col2"
       },
       {
-        col1: "whatever",
-        col2: "you want"
+        Header: "All Time High",
+        accessor: "col3"
+      },
+      {
+        Header: "Days Since ATH",
+        accessor: "col4"
+      },
+      {
+        Header: "Market Cap",
+        accessor: "col5"
+      },
+      {
+        Header: "Market Share",
+        accessor: "col6"
       }
     ],
     []
   );
 
-  const columns = useMemo(
-    () => [
-      {
-        Header: "Column 1",
-        accessor: "col1" // accessor is the "key" in the data
-      },
-      {
-        Header: "Column 2",
-        accessor: "col2"
-      }
-    ],
-    []
+  const data = useMemo(
+    () =>
+      cryptoData.map(coin => ({
+        col1: `${coin.name} (${coin.symbol})`,
+        col2: coin.current_price,
+        col3: `$${coin.ath}`,
+        col4: daysSince(coin.ath_date),
+        col5: coin.market_cap,
+        col6: `${((coin.market_cap / totalMarketShare) * 100).toFixed(3)}%`
+      })),
+    [cryptoData, totalMarketShare]
   );
 
   const {
@@ -58,21 +93,16 @@ function App() {
     prepareRow
   } = useTable({ columns, data });
 
+  // need:
+  // - days SINCE all time high
+  // - percentage of market share (for first 100 coins)
   console.log(cryptoData);
+  // console.log(totalMarketShare);
 
   return (
     // apply the table props
 
     <>
-      <div>
-        {cryptoData.map(coin => (
-          <>
-            <div>Symbol: {coin.symbol}</div>
-            <div>Current Price: {coin.current_price}</div>
-            <div>Market Cap: {coin.market_cap}</div>
-          </>
-        ))}
-      </div>
       <table {...getTableProps()}>
         <thead>
           {// Loop over the header rows
@@ -119,3 +149,17 @@ function App() {
 }
 
 export default App;
+
+/********** Helper ************/
+
+function daysSince(date) {
+  if (typeof date == "string") {
+    date = new Date(date);
+  }
+
+  const ONE_DAY = 1000 * 60 * 60 * 24;
+
+  let diff = Date.now() - date;
+
+  return Math.round(diff / ONE_DAY);
+}
