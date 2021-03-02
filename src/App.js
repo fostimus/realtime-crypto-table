@@ -11,35 +11,22 @@ function App() {
 
   const amountOfCoins = 100;
 
-  async function longPoll() {
-    let response = await axios.get(
-      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${amountOfCoins}&page=1&sparkline=false`
-    );
-
-    if (response.status === 502) {
-      await longPoll();
-    } else if (response.status !== 200) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await longPoll();
-    } else {
-      let data = response.data;
-
-      await longPoll();
-    }
-  }
-
   useEffect(() => {
-    axios("").then(response => {
-      console.log(response);
-      setCryptoData(response.data);
+    axios
+      .get(
+        `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${amountOfCoins}&page=1&sparkline=false`
+      )
+      .then(response => {
+        console.log(response);
+        setCryptoData(response.data);
 
-      setTotalMarketShare(
-        response.data.reduce((acc, coin) => acc + coin.market_cap, 0)
-      );
+        setTotalMarketShare(
+          response.data.reduce((acc, coin) => acc + coin.market_cap, 0)
+        );
 
-      // re-render state to get updated data from coingecko
-      setTimeout(() => setRenderToggle(!renderToggle), 1000);
-    });
+        // re-render state to get updated data from coingecko
+        setTimeout(() => setRenderToggle(!renderToggle), 1000);
+      });
   }, [renderToggle]);
 
   const columns = useMemo(
