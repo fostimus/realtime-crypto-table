@@ -1,6 +1,5 @@
 import { useMemo, useEffect, useState } from "react";
 import { useTable } from "react-table";
-import "./App.scss";
 import axios from "axios";
 
 function App() {
@@ -29,44 +28,44 @@ function App() {
       });
   }, [renderToggle]);
 
-  const columns = useMemo(
-    () => [
-      {
-        Header: "Coin (symbol)",
-        accessor: "col1" // accessor is the "key" in the data
-      },
-      {
-        Header: "Price",
-        accessor: "col2"
-      },
-      {
-        Header: "All Time High",
-        accessor: "col3"
-      },
-      {
-        Header: "Days Since ATH",
-        accessor: "col4"
-      },
-      {
-        Header: "Market Cap",
-        accessor: "col5"
-      },
-      {
-        Header: "Market Share",
-        accessor: "col6"
-      }
-    ],
-    []
-  );
+  // note: styling can only support up to 12 columns. to add more, need to add to tailwind.config.js
+  const coinFields = [
+    {
+      Header: "Coin (symbol)",
+      accessor: "col1"
+    },
+    {
+      Header: "Price",
+      accessor: "col2"
+    },
+    {
+      Header: "All Time High",
+      accessor: "col3"
+    },
+    {
+      Header: "Days Since ATH",
+      accessor: "col4"
+    },
+    {
+      Header: "Market Cap",
+      accessor: "col5"
+    },
+    {
+      Header: "Market Share",
+      accessor: "col6"
+    }
+  ];
+
+  const columns = useMemo(() => coinFields, []);
 
   const data = useMemo(
     () =>
       cryptoData.map(coin => ({
         col1: `${coin.name} (${coin.symbol})`,
         col2: coin.current_price,
-        col3: `$${coin.ath}`,
+        col3: `$${new Intl.NumberFormat().format(coin.ath)}`,
         col4: daysSince(coin.ath_date),
-        col5: coin.market_cap,
+        col5: `$${new Intl.NumberFormat().format(coin.market_cap)}`,
         col6: `${((coin.market_cap / totalMarketShare) * 100).toFixed(3)}%`
       })),
     [cryptoData, totalMarketShare]
@@ -80,26 +79,21 @@ function App() {
     prepareRow
   } = useTable({ columns, data });
 
-  // need:
-  // - days SINCE all time high
-  // - percentage of market share (for first 100 coins)
-  console.log(cryptoData);
-  // console.log(totalMarketShare);
+  const tdStyles = `w-1/${coinFields.length}`;
+  const trStyles = `border-b border-grey-300`;
 
   return (
-    // apply the table props
-
     <>
-      <table {...getTableProps()}>
+      <table className="mx-auto text-center" {...getTableProps()}>
         <thead>
           {// Loop over the header rows
           headerGroups.map(headerGroup => (
             // Apply the header row props
-            <tr {...headerGroup.getHeaderGroupProps()}>
+            <tr className={trStyles} {...headerGroup.getHeaderGroupProps()}>
               {// Loop over the headers in each row
               headerGroup.headers.map(column => (
                 // Apply the header cell props
-                <th {...column.getHeaderProps()}>
+                <th className={`${tdStyles} h-12`} {...column.getHeaderProps()}>
                   {// Render the header
                   column.render("Header")}
                 </th>
@@ -115,12 +109,15 @@ function App() {
             prepareRow(row);
             return (
               // Apply the row props
-              <tr {...row.getRowProps()}>
+              <tr
+                className={`${trStyles} hover:bg-gray-200`}
+                {...row.getRowProps()}
+              >
                 {// Loop over the rows cells
                 row.cells.map(cell => {
                   // Apply the cell props
                   return (
-                    <td {...cell.getCellProps()}>
+                    <td className={tdStyles} {...cell.getCellProps()}>
                       {// Render the cell contents
                       cell.render("Cell")}
                     </td>
