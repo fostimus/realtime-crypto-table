@@ -3,14 +3,28 @@ import { useTable, useSortBy } from "react-table";
 import axios from "axios";
 
 function App() {
-  const [renderToggle, setRenderToggle] = useState(false);
-  const [coinCol, setCoinCol] = useState([]);
-  const [priceCol, setPriceCol] = useState([]);
-  const [athCol, setAthCol] = useState([]);
-  const [daysSinceAthCol, setDaysSinceAthCol] = useState([]);
-  const [marketCapCol, setMarketCapCol] = useState([]);
-  const [marketSharCol, setMarketShareCol] = useState([]);
+  /********* Constants ********/
 
+  // columns
+  const coinFields = useMemo(
+    () => [
+      "Coin (symbol)",
+      "Price",
+      "All Time High",
+      "Days Since ATH",
+      "Market Cap",
+      "Market Share"
+    ],
+    []
+  );
+
+  const downArrow = "🔽";
+  const upArrow = "🔼";
+
+  /********* State *********/
+  const [renderToggle, setRenderToggle] = useState(false);
+  const [initialState, setInitialState] = useState({});
+  const [sortCol, setSortCol] = useState({ id: "", desc: null });
   const [cryptoData, setCryptoData] = useState([]);
   // save as separate state for readability
   const [totalMarketShare, setTotalMarketShare] = useState(0);
@@ -46,37 +60,15 @@ function App() {
   }, [renderToggle]);
 
   // note: styling can only support up to 12 columns. to add more, need to add to tailwind.config.js
-  const coinFields = useMemo(
-    () => [
-      {
-        Header: "Coin (symbol)",
-        accessor: "col1"
-      },
-      {
-        Header: "Price",
-        accessor: "col2"
-      },
-      {
-        Header: "All Time High",
-        accessor: "col3"
-      },
-      {
-        Header: "Days Since ATH",
-        accessor: "col4"
-      },
-      {
-        Header: "Market Cap",
-        accessor: "col5"
-      },
-      {
-        Header: "Market Share",
-        accessor: "col6"
-      }
-    ],
-    []
-  );
 
-  const columns = useMemo(() => coinFields, [coinFields]);
+  const columns = useMemo(
+    () =>
+      coinFields.map((col, index) => ({
+        Header: col,
+        accessor: `col${index + 1}`
+      })),
+    [coinFields]
+  );
 
   const data = useMemo(
     () =>
@@ -97,14 +89,41 @@ function App() {
     headerGroups,
     rows,
     prepareRow
-  } = useTable({ columns, data }, useSortBy);
+  } = useTable({ columns, data, initialState }, useSortBy);
+
+  // console.log(initialState);
+
+  /****** Event handlers *********/
+
+  function updateSortCol(col, sorted, sortedDesc) {
+    console.log("edsfdsfsdfhlp");
+    const updatedSortCol = coinFields.map(field => {
+      if (field === col && sorted) {
+        if (sortedDesc) {
+          return false;
+        } else {
+          return true;
+        }
+      } else {
+        return undefined;
+      }
+    });
+
+    setInitialState({ sortBy: updatedSortCol });
+  }
+
+  const coll = headerGroups[0].headers[0];
+  console.log(coll.getHeaderProps(coll.getSortByToggleProps()));
 
   /****** styles ******/
   const tdStyles = `py-4 px-14 md:px-4 w-1/${coinFields.length}`;
   const trStyles = `border-b border-grey-300`;
 
   return (
-    <>
+    <div className="m-4">
+      <h1 className="text-center underline text-2xl my-4">
+        Real Time Top 100 Cryptocurrencies
+      </h1>
       <table
         className="mx-auto text-center text-sm md:text-base"
         {...getTableProps()}
@@ -115,10 +134,17 @@ function App() {
             // Apply the header row props
             <tr className={trStyles} {...headerGroup.getHeaderGroupProps()}>
               {// Loop over the headers in each row
-              headerGroup.headers.map(column => (
+              headerGroup.headers.map((column, index) => (
                 // Apply the header cell props
                 <th
                   className={`${tdStyles} h-12`}
+                  onClick={() =>
+                    updateSortCol(
+                      column.render("Header"),
+                      column.isSorted,
+                      column.isSortedDesc
+                    )
+                  }
                   {...column.getHeaderProps(column.getSortByToggleProps())}
                 >
                   {// Render the header
@@ -162,7 +188,7 @@ function App() {
           })}
         </tbody>
       </table>
-    </>
+    </div>
   );
 }
 
