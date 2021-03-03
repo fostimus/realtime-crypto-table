@@ -24,11 +24,9 @@ function App() {
   /********* State *********/
   const [renderToggle, setRenderToggle] = useState(false);
   const [initialState, setInitialState] = useState({});
-  const [sortCol, setSortCol] = useState({ id: "", desc: null });
   const [cryptoData, setCryptoData] = useState([]);
   // save as separate state for readability
   const [totalMarketShare, setTotalMarketShare] = useState(0);
-  const prevCryptoRef = useRef();
 
   const amountOfCoins = 100;
 
@@ -83,6 +81,8 @@ function App() {
     [totalMarketShare, cryptoData]
   );
 
+  console.log(initialState);
+
   const {
     getTableProps,
     getTableBodyProps,
@@ -95,25 +95,15 @@ function App() {
 
   /****** Event handlers *********/
 
-  function updateSortCol(col, sorted, sortedDesc) {
-    console.log("edsfdsfsdfhlp");
-    const updatedSortCol = coinFields.map(field => {
-      if (field === col && sorted) {
-        if (sortedDesc) {
-          return false;
-        } else {
-          return true;
-        }
-      } else {
-        return undefined;
-      }
-    });
+  function updateSortCol(col, sortedDesc) {
+    console.log(sortedDesc);
+    const updatedSortCol = {
+      id: `col${coinFields.indexOf(col) + 1}`,
+      desc: sortedDesc
+    };
 
-    setInitialState({ sortBy: updatedSortCol });
+    setInitialState({ sortBy: [updatedSortCol] });
   }
-
-  const coll = headerGroups[0].headers[0];
-  console.log(coll.getHeaderProps(coll.getSortByToggleProps()));
 
   /****** styles ******/
   const tdStyles = `py-4 px-14 md:px-4 w-1/${coinFields.length}`;
@@ -138,24 +128,26 @@ function App() {
                 // Apply the header cell props
                 <th
                   className={`${tdStyles} h-12`}
-                  onClick={() =>
-                    updateSortCol(
-                      column.render("Header"),
-                      column.isSorted,
-                      column.isSortedDesc
-                    )
-                  }
                   {...column.getHeaderProps(column.getSortByToggleProps())}
                 >
-                  {// Render the header
-                  column.render("Header")}
-                  <span>
-                    {column.isSorted
-                      ? column.isSortedDesc
-                        ? " 🔽"
-                        : " 🔼"
-                      : ""}
-                  </span>
+                  <div
+                    onClick={() =>
+                      updateSortCol(
+                        column.render("Header"),
+                        column.isSorted && column.isSortedDesc
+                      )
+                    }
+                  >
+                    {// Render the header
+                    column.render("Header")}
+                    <span>
+                      {column.isSorted
+                        ? column.isSortedDesc
+                          ? " 🔽"
+                          : " 🔼"
+                        : ""}
+                    </span>
+                  </div>
                 </th>
               ))}
             </tr>
