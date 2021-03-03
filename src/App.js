@@ -18,8 +18,8 @@ function App() {
     []
   );
 
-  const downArrow = "🔽";
-  const upArrow = "🔼";
+  const downArrow = " 🔽";
+  const upArrow = " 🔼";
 
   /********* State *********/
   const [renderToggle, setRenderToggle] = useState(false);
@@ -81,8 +81,6 @@ function App() {
     [totalMarketShare, cryptoData]
   );
 
-  console.log(initialState);
-
   const {
     getTableProps,
     getTableBodyProps,
@@ -91,19 +89,7 @@ function App() {
     prepareRow
   } = useTable({ columns, data, initialState }, useSortBy);
 
-  // console.log(initialState);
-
   /****** Event handlers *********/
-
-  function updateSortCol(col, sortedDesc) {
-    console.log(sortedDesc);
-    const updatedSortCol = {
-      id: `col${coinFields.indexOf(col) + 1}`,
-      desc: sortedDesc
-    };
-
-    setInitialState({ sortBy: [updatedSortCol] });
-  }
 
   /****** styles ******/
   const tdStyles = `py-4 px-14 md:px-4 w-1/${coinFields.length}`;
@@ -130,21 +116,14 @@ function App() {
                   className={`${tdStyles} h-12`}
                   {...column.getHeaderProps(column.getSortByToggleProps())}
                 >
-                  <div
-                    onClick={() =>
-                      updateSortCol(
-                        column.render("Header"),
-                        column.isSorted && column.isSortedDesc
-                      )
-                    }
-                  >
+                  <div>
                     {// Render the header
                     column.render("Header")}
                     <span>
                       {column.isSorted
                         ? column.isSortedDesc
-                          ? " 🔽"
-                          : " 🔼"
+                          ? downArrow
+                          : upArrow
                         : ""}
                     </span>
                   </div>
