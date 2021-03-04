@@ -36,14 +36,6 @@ function App() {
         `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${amountOfCoins}&page=1&sparkline=false`
       )
       .then(response => {
-        response.data.map((coin, index) => ({
-          col1: `${coin.name} (${coin.symbol})`,
-          col2: formatMoney(coin.current_price),
-          col3: formatMoney(coin.ath),
-          col4: daysSince(coin.ath_date),
-          col5: formatMoney(coin.market_cap),
-          col6: `${((coin.market_cap / totalMarketShare) * 100).toFixed(3)}%`
-        }));
         setCryptoData(response.data);
 
         setTotalMarketShare(
@@ -51,7 +43,7 @@ function App() {
         );
 
         // re-render state to get updated data from coingecko, doing this render evrery second instead of infinitely
-        setTimeout(() => setRenderToggle(!renderToggle), 5000);
+        setTimeout(() => setRenderToggle(!renderToggle), 1000);
       });
   }, [renderToggle]);
 
@@ -65,10 +57,22 @@ function App() {
     [coinFields]
   );
 
+  const logoSize = 25;
+
   const data = useMemo(
     () =>
       cryptoData.map((coin, index) => ({
-        col1: `${coin.name} (${coin.symbol})`,
+        col1: (
+          <div className="flex items-center justify-evenly">
+            <img
+              src={coin.image}
+              alt={`${coin.name}-logo`}
+              height={logoSize}
+              width={logoSize}
+            />
+            {coin.name} ({coin.symbol})
+          </div>
+        ),
         col2: formatMoney(coin.current_price),
         col3: formatMoney(coin.ath),
         col4: daysSince(coin.ath_date),
@@ -101,6 +105,8 @@ function App() {
     },
     useSortBy
   );
+
+  console.log(rows[2]);
 
   /****** Event handlers ********/
   function clickHeader(column) {
