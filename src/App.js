@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState, useRef } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useTable, useSortBy } from "react-table";
 import axios from "axios";
 
@@ -23,7 +23,7 @@ function App() {
 
   /********* State *********/
   const [renderToggle, setRenderToggle] = useState(false);
-  const [initialState, setInitialState] = useState({});
+  const [sortBy, setSortBy] = useState([]);
   const [cryptoData, setCryptoData] = useState([]);
   // save as separate state for readability
   const [totalMarketShare, setTotalMarketShare] = useState(0);
@@ -53,12 +53,9 @@ function App() {
         // re-render state to get updated data from coingecko, doing this render evrery second instead of infinitely
         setTimeout(() => setRenderToggle(!renderToggle), 5000);
       });
-
-    // prevCryptoRef.current = cryptoData;
   }, [renderToggle]);
 
   // note: styling can only support up to 12 columns. to add more, need to add to tailwind.config.js
-
   const columns = useMemo(
     () =>
       coinFields.map((col, index) => ({
@@ -87,9 +84,42 @@ function App() {
     headerGroups,
     rows,
     prepareRow
-  } = useTable({ columns, data, initialState }, useSortBy);
+  } = useTable(
+    {
+      columns,
+      data,
+      // control state to have sort persist across real time calls
+      useControlledState: state => {
+        return useMemo(
+          () => ({
+            ...state,
+            sortBy: sortBy
+          }),
+          [state]
+        );
+      }
+    },
+    useSortBy
+  );
 
-  /****** Event handlers *********/
+  /****** Event handlers ********/
+  function clickHeader(column) {
+    const curIdx = coinFields.indexOf(column) + 1;
+    const curCol = `col${curIdx}`;
+
+    if (sortBy && sortBy.length > 0 && sortBy[0].id === curCol) {
+      if (sortBy[0].desc) {
+        //Descending - switch to no sort
+        setSortBy([]);
+      } else {
+        //Ascending - switch to descending
+        setSortBy([{ id: curCol, desc: true }]);
+      }
+    } else {
+      //No sort - switch to descending
+      setSortBy([{ id: curCol, desc: false }]);
+    }
+  }
 
   /****** styles ******/
   const tdStyles = `py-4 px-14 md:px-4 w-1/${coinFields.length}`;
@@ -105,20 +135,16 @@ function App() {
         {...getTableProps()}
       >
         <thead>
-          {// Loop over the header rows
-          headerGroups.map(headerGroup => (
-            // Apply the header row props
+          {headerGroups.map(headerGroup => (
             <tr className={trStyles} {...headerGroup.getHeaderGroupProps()}>
-              {// Loop over the headers in each row
-              headerGroup.headers.map((column, index) => (
-                // Apply the header cell props
+              {headerGroup.headers.map((column, index) => (
                 <th
                   className={`${tdStyles} h-12`}
                   {...column.getHeaderProps(column.getSortByToggleProps())}
+                  onClick={() => clickHeader(column.render("Header"))}
                 >
                   <div>
-                    {// Render the header
-                    column.render("Header")}
+                    {column.render("Header")}
                     <span>
                       {column.isSorted
                         ? column.isSortedDesc
@@ -132,25 +158,24 @@ function App() {
             </tr>
           ))}
         </thead>
-        {/* Apply the table body props */}
         <tbody {...getTableBodyProps()}>
-          {// Loop over the table rows
-          rows.map(row => {
-            // Prepare the row for display
+          {rows.map(row => {
             prepareRow(row);
             return (
-              // Apply the row props
               <tr
                 className={`${trStyles} hover:bg-gray-200`}
                 {...row.getRowProps()}
               >
-                {// Loop over the rows cells
-                row.cells.map(cell => {
-                  // Apply the cell props
+                {row.cells.map(cell => {
                   return (
-                    <td className={tdStyles} {...cell.getCellProps()}>
-                      {// Render the cell contents
-                      cell.render("Cell")}
+                    <td
+                      className={tdStyles}
+                      onChange={() =>
+                        console.log(cell.render("Cell"), "I changed!")
+                      }
+                      {...cell.getCellProps()}
+                    >
+                      {cell.render("Cell")}
                     </td>
                   );
                 })}
@@ -165,7 +190,7 @@ function App() {
 
 export default App;
 
-/********** Helper ************/
+/********** Helpers ************/
 
 function daysSince(date) {
   if (typeof date == "string") {
