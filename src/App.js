@@ -24,9 +24,7 @@ function App() {
   /********* State *********/
   const [renderToggle, setRenderToggle] = useState(false);
   const [sortBy, setSortBy] = useState([]);
-  const [cryptoData, setCryptoData] = useState([]);
-  // save as separate state for readability
-  const [totalMarketShare, setTotalMarketShare] = useState(0);
+  const [rowState, setRowState] = useState([]);
 
   const amountOfCoins = 100;
 
@@ -36,11 +34,31 @@ function App() {
         `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${amountOfCoins}&page=1&sparkline=false`
       )
       .then(response => {
-        setCryptoData(response.data);
-
-        setTotalMarketShare(
-          response.data.reduce((acc, coin) => acc + coin.market_cap, 0)
+        const totalMarketShare = response.data.reduce(
+          (acc, coin) => acc + coin.market_cap,
+          0
         );
+
+        const rows = response.data.map((coin, index) => ({
+          col0: (
+            <div className="flex items-center justify-start gap-3">
+              <img
+                src={coin.image}
+                alt={`${coin.name}-logo`}
+                height={logoSize}
+                width={logoSize}
+              />
+              {coin.name} ({coin.symbol})
+            </div>
+          ),
+          col1: formatMoney(coin.current_price),
+          col2: formatMoney(coin.ath),
+          col3: daysSince(coin.ath_date),
+          col4: formatMoney(coin.market_cap),
+          col5: `${((coin.market_cap / totalMarketShare) * 100).toFixed(3)}%`
+        }));
+
+        setRowState(rows);
 
         // re-render state to get updated data from coingecko, doing this render evrery second instead of infinitely
         setTimeout(() => setRenderToggle(!renderToggle), 1000);
@@ -52,35 +70,14 @@ function App() {
     () =>
       coinFields.map((col, index) => ({
         Header: col,
-        accessor: `col${index + 1}`
+        accessor: `col${index}`
       })),
     [coinFields]
   );
 
   const logoSize = 25;
 
-  const data = useMemo(
-    () =>
-      cryptoData.map((coin, index) => ({
-        col1: (
-          <div className="flex items-center justify-start gap-3">
-            <img
-              src={coin.image}
-              alt={`${coin.name}-logo`}
-              height={logoSize}
-              width={logoSize}
-            />
-            {coin.name} ({coin.symbol})
-          </div>
-        ),
-        col2: formatMoney(coin.current_price),
-        col3: formatMoney(coin.ath),
-        col4: daysSince(coin.ath_date),
-        col5: formatMoney(coin.market_cap),
-        col6: `${((coin.market_cap / totalMarketShare) * 100).toFixed(3)}%`
-      })),
-    [totalMarketShare, cryptoData]
-  );
+  const data = useMemo(() => rowState, [rowState]);
 
   const {
     getTableProps,
@@ -108,7 +105,7 @@ function App() {
 
   /****** Event handlers ********/
   function clickHeader(column) {
-    const curIdx = coinFields.indexOf(column) + 1;
+    const curIdx = coinFields.indexOf(column);
     const curCol = `col${curIdx}`;
 
     if (sortBy && sortBy.length > 0 && sortBy[0].id === curCol) {
@@ -130,7 +127,7 @@ function App() {
   const trStyles = `border-b border-grey-300`;
 
   return (
-    <div className="m-4">
+    <div className="md:mx-10 md:mb-10 relative top-4">
       <h1 className="text-center underline text-2xl my-4">
         Real Time Top 100 Cryptocurrencies
       </h1>

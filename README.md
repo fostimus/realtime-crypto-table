@@ -6,4 +6,5 @@ Instead, I set up HTTP polling by requesting new data every second. This is conf
 
 ## To Do's
 
-- custom sort method: current string version of money values is throwing off numeric ordering
+-   custom sort method: current string version of money and coin (because of JSX markup) values is throwing off correct ordering
+-   Some visualization of data changing - not easily able to tell the data changes in real time
