@@ -63,7 +63,7 @@ function App() {
     () =>
       cryptoData.map((coin, index) => ({
         col1: (
-          <div className="flex items-center justify-evenly">
+          <div className="flex items-center justify-start gap-3">
             <img
               src={coin.image}
               alt={`${coin.name}-logo`}
@@ -105,8 +105,6 @@ function App() {
     },
     useSortBy
   );
-
-  console.log(rows[2]);
 
   /****** Event handlers ********/
   function clickHeader(column) {
