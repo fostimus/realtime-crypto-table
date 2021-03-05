@@ -8,6 +8,12 @@ Instead, I set up HTTP polling by requesting new data every second. This is conf
 
 I used TailwindCSS to style - it is easily customizable, and very quick style markup. I kept the UI overall simple, and chose a neutral/lighter font for an easier feel. When you sort a column, the header styles change to indicate which column you chose.
 
+## Screenshots
+
+![Landing Screen](public/screenshots/1.png)
+![Descending on Web App](public/screenshots/2.png)
+![Ascending on Mobile](public/screenshots/3.png)
+
 ## To Do's
 
 -   Custom sort method: current string version of money and coin (because of JSX markup) values is throwing off correct ordering
