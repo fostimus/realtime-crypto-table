@@ -2,7 +2,12 @@ module.exports = {
   purge: ["./src/**/*.{js,jsx,ts,tsx}", "./public/index.html"],
   darkMode: false, // or 'media' or 'class'
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        desc: "#4A8BB8",
+        asc: "#CE4760"
+      }
+    },
     width: theme => ({
       auto: "auto",
       ...theme("spacing"),

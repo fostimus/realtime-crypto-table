@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useRef } from "react";
 import { useTable, useSortBy } from "react-table";
 import axios from "axios";
 
@@ -18,17 +18,28 @@ function App() {
     []
   );
 
-  const downArrow = " 🔽";
-  const upArrow = " 🔼";
+  const downArrow = " 👇🏻";
+  const upArrow = " 👆🏻";
 
   /********* State *********/
   const [renderToggle, setRenderToggle] = useState(false);
-  const [sortBy, setSortBy] = useState([]);
+  // row state
   const [rowState, setRowState] = useState([]);
+  const [rowChangedState, setRowChangedState] = useState("");
+  const prevRowsRef = useRef();
+
+  // column selection state
+  const [sortBy, setSortBy] = useState([]);
+  const initColStyle = {
+    col: "",
+    style: ""
+  };
+  const [colStyle, setColStyle] = useState(initColStyle);
 
   const amountOfCoins = 100;
 
   useEffect(() => {
+    prevRowsRef.current = rowState;
     axios
       .get(
         `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${amountOfCoins}&page=1&sparkline=false`
@@ -61,9 +72,9 @@ function App() {
         setRowState(rows);
 
         // re-render state to get updated data from coingecko, doing this render evrery second instead of infinitely
-        setTimeout(() => setRenderToggle(!renderToggle), 1000);
+        // setTimeout(() => setRenderToggle(!renderToggle), 1000);
       });
-  }, [renderToggle]);
+  }, [renderToggle, rowState]);
 
   // note: styling can only support up to 12 columns. to add more, need to add to tailwind.config.js
   const columns = useMemo(
@@ -108,23 +119,67 @@ function App() {
     const curIdx = coinFields.indexOf(column);
     const curCol = `col${curIdx}`;
 
+    const commonColStyles = "rounded-2xl italic";
+
     if (sortBy && sortBy.length > 0 && sortBy[0].id === curCol) {
       if (sortBy[0].desc) {
         //Descending - switch to no sort
         setSortBy([]);
+        setColStyle(initColStyle);
       } else {
         //Ascending - switch to descending
         setSortBy([{ id: curCol, desc: true }]);
+        setColStyle({
+          col: column,
+          style: `bg-asc ${commonColStyles}`
+        });
       }
     } else {
       //No sort - switch to descending
       setSortBy([{ id: curCol, desc: false }]);
+      setColStyle({
+        col: column,
+        style: `bg-desc ${commonColStyles}`
+      });
     }
   }
 
   /****** styles ******/
-  const tdStyles = `py-4 px-14 md:px-4 w-1/${coinFields.length}`;
+  const tdStyles = `py-4 px-14 md:px-4 w-1/${coinFields.length} transition-colors duration-500`;
   const trStyles = `border-b border-grey-300`;
+
+  const upStyles = `text-green-500`;
+  const downStyles = `text-red-500`;
+
+  function styleTd(prevCell, curCell) {
+    // console.log(curCell);
+    // console.log(prevCell?.[`col${2}`]);
+
+    // dollar amount
+    if (
+      prevCell &&
+      curCell &&
+      typeof prevCell == "string" &&
+      typeof curCell == "string"
+    ) {
+      // console.log("prev:", prevCell.includes("$"));
+      // console.log("cur:", curCell.includes("$"));
+      if (prevCell.includes("$") && curCell.includes("$")) {
+        let prevNumber = formatMoneyToNumber(prevCell);
+        let curNumber = formatMoneyToNumber(curCell);
+        //
+        console.log("prev:", prevNumber);
+        console.log("cur:", curNumber);
+        if (prevNumber < curNumber) {
+          return upStyles;
+        } else if (prevNumber > curNumber) {
+          return downStyles;
+        } else {
+          return;
+        }
+      }
+    }
+  }
 
   return (
     <div className="md:mx-10 md:mb-10 relative top-4">
@@ -132,7 +187,7 @@ function App() {
         Real Time Top 100 Cryptocurrencies
       </h1>
       <table
-        className="mx-auto text-center text-sm md:text-base"
+        className="mx-auto text-center text-sm md:text-base block overflow-x-scroll md:table"
         {...getTableProps()}
       >
         <thead>
@@ -140,13 +195,17 @@ function App() {
             <tr className={trStyles} {...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map((column, index) => (
                 <th
-                  className={`${tdStyles} h-12`}
+                  className={`${
+                    colStyle.col === column.render("Header")
+                      ? colStyle.style
+                      : ""
+                  } ${tdStyles} h-12`}
                   {...column.getHeaderProps(column.getSortByToggleProps())}
                   onClick={() => clickHeader(column.render("Header"))}
                 >
                   <div>
                     {column.render("Header")}
-                    <span>
+                    <span className="not-italic">
                       {column.isSorted
                         ? column.isSortedDesc
                           ? downArrow
@@ -160,20 +219,20 @@ function App() {
           ))}
         </thead>
         <tbody {...getTableBodyProps()}>
-          {rows.map(row => {
+          {rows.map((row, rowIndex) => {
             prepareRow(row);
             return (
               <tr
                 className={`${trStyles} hover:bg-gray-200`}
                 {...row.getRowProps()}
               >
-                {row.cells.map(cell => {
+                {row.cells.map((cell, cellIndex) => {
                   return (
                     <td
-                      className={tdStyles}
-                      onChange={() =>
-                        console.log(cell.render("Cell"), "I changed!")
-                      }
+                      className={`${tdStyles} ${styleTd(
+                        prevRowsRef.current[rowIndex]?.[`col${cellIndex}`],
+                        cell.value
+                      )}`}
                       {...cell.getCellProps()}
                     >
                       {cell.render("Cell")}
@@ -219,4 +278,8 @@ function formatMoney(amount) {
   }
 
   return formattedAmount;
+}
+
+function formatMoneyToNumber(amount) {
+  return Number(amount.replace(/[^0-9.-]+/g, ""));
 }
