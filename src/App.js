@@ -115,7 +115,8 @@ function App() {
     const curIdx = coinFields.indexOf(column);
     const curCol = `col${curIdx}`;
 
-    const commonColStyles = "rounded-2xl italic";
+    const commonColStyles =
+      "rounded-2xl italic p-2 md:px-4 md:text-lg shadow-xl";
 
     if (sortBy && sortBy.length > 0 && sortBy[0].id === curCol) {
       if (sortBy[0].desc) {
@@ -159,15 +160,17 @@ function App() {
             <tr className={trStyles} {...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map((column, index) => (
                 <th
-                  className={`${
-                    colStyle.col === column.render("Header")
-                      ? colStyle.style
-                      : ""
-                  } ${tdStyles} h-12`}
+                  className={` ${tdStyles} h-12 `}
                   {...column.getHeaderProps(column.getSortByToggleProps())}
                   onClick={() => clickHeader(column.render("Header"))}
                 >
-                  <div>
+                  <div
+                    className={`mx-auto inline-block transition-all duration-150 delay-100 ${
+                      colStyle.col === column.render("Header")
+                        ? colStyle.style
+                        : ""
+                    }`}
+                  >
                     {column.render("Header")}
                     <span className="not-italic">
                       {column.isSorted
