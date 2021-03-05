@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState, useRef } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useTable, useSortBy } from "react-table";
 import axios from "axios";
 
@@ -73,7 +73,6 @@ function App() {
       });
   }, [renderToggle, rowState]);
 
-  // note: styling can only support up to 12 columns. to add more, need to add to tailwind.config.js
   const columns = useMemo(
     () =>
       coinFields.map((col, index) => ({
@@ -142,6 +141,7 @@ function App() {
   }
 
   /****** styles ******/
+  // note: styling can only support up to 12 columns. to add more, need to add to tailwind.config.js
   const tdStyles = `py-4 px-14 md:px-4 w-1/${coinFields.length} transition-colors duration-500`;
   const trStyles = `border-b border-grey-300`;
 
@@ -236,8 +236,4 @@ function formatMoney(amount) {
   }
 
   return formattedAmount;
-}
-
-function formatMoneyToNumber(amount) {
-  return Number(amount.replace(/[^0-9.-]+/g, ""));
 }
