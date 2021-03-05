@@ -25,8 +25,6 @@ function App() {
   const [renderToggle, setRenderToggle] = useState(false);
   // row state
   const [rowState, setRowState] = useState([]);
-  const [rowChangedState, setRowChangedState] = useState("");
-  const prevRowsRef = useRef();
 
   // column selection state
   const [sortBy, setSortBy] = useState([]);
@@ -39,7 +37,6 @@ function App() {
   const amountOfCoins = 100;
 
   useEffect(() => {
-    prevRowsRef.current = rowState;
     axios
       .get(
         `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${amountOfCoins}&page=1&sparkline=false`
@@ -72,7 +69,7 @@ function App() {
         setRowState(rows);
 
         // re-render state to get updated data from coingecko, doing this render evrery second instead of infinitely
-        // setTimeout(() => setRenderToggle(!renderToggle), 1000);
+        setTimeout(() => setRenderToggle(!renderToggle), 1000);
       });
   }, [renderToggle, rowState]);
 
@@ -148,39 +145,6 @@ function App() {
   const tdStyles = `py-4 px-14 md:px-4 w-1/${coinFields.length} transition-colors duration-500`;
   const trStyles = `border-b border-grey-300`;
 
-  const upStyles = `text-green-500`;
-  const downStyles = `text-red-500`;
-
-  function styleTd(prevCell, curCell) {
-    // console.log(curCell);
-    // console.log(prevCell?.[`col${2}`]);
-
-    // dollar amount
-    if (
-      prevCell &&
-      curCell &&
-      typeof prevCell == "string" &&
-      typeof curCell == "string"
-    ) {
-      // console.log("prev:", prevCell.includes("$"));
-      // console.log("cur:", curCell.includes("$"));
-      if (prevCell.includes("$") && curCell.includes("$")) {
-        let prevNumber = formatMoneyToNumber(prevCell);
-        let curNumber = formatMoneyToNumber(curCell);
-        //
-        console.log("prev:", prevNumber);
-        console.log("cur:", curNumber);
-        if (prevNumber < curNumber) {
-          return upStyles;
-        } else if (prevNumber > curNumber) {
-          return downStyles;
-        } else {
-          return;
-        }
-      }
-    }
-  }
-
   return (
     <div className="md:mx-10 md:mb-10 relative top-4">
       <h1 className="text-center underline text-2xl my-4">
@@ -228,13 +192,7 @@ function App() {
               >
                 {row.cells.map((cell, cellIndex) => {
                   return (
-                    <td
-                      className={`${tdStyles} ${styleTd(
-                        prevRowsRef.current[rowIndex]?.[`col${cellIndex}`],
-                        cell.value
-                      )}`}
-                      {...cell.getCellProps()}
-                    >
+                    <td className={`${tdStyles}`} {...cell.getCellProps()}>
                       {cell.render("Cell")}
                     </td>
                   );
